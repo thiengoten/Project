@@ -154,8 +154,12 @@ export class ShiftService {
           'department.address',
           'department.isActive',
         ])
-        .from(Shift, 'shift')
-        .innerJoin(
+        .from(Shift, 'shift');
+
+      if (!queries.departmentId) {
+        query = query.innerJoin('shift.department', 'department');
+      } else {
+        query = query.innerJoin(
           'shift.department',
           'department',
           'shift.departmentId = :departmentId',
@@ -163,6 +167,7 @@ export class ShiftService {
             departmentId: queries.departmentId,
           },
         );
+      }
 
       query = ExtraQueryBuilder.addWhereAnd<Shift>(
         query,

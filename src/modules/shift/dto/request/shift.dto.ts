@@ -86,7 +86,7 @@ export class GetShiftListReqDto extends PaginationReqDto {
     { message: 'The department id must be a number' },
   )
   @ApiProperty({
-    example: 1,
+    required: false,
   })
   readonly departmentId?: number;
 }

@@ -50,7 +50,7 @@ export class ShiftController {
 
   @Get('list')
   @HttpCode(200)
-  @Auth(ACCOUNT_ROLE.ADM, ACCOUNT_ROLE.SUPERVISOR)
+  // @Auth(ACCOUNT_ROLE.ADM, ACCOUNT_ROLE.SUPERVISOR)
   async getShiftList(
     @Query() queries: GetShiftListReqDto,
   ): Promise<GetShiftListResDto> {
