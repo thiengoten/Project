@@ -112,9 +112,11 @@ export class ShiftService {
         .innerJoin('shift.tasks', 'task')
         .innerJoin('shift.notes', 'note')
         .addSelect([
+          'task.id',
           'task.shiftId',
           'task.name',
           'task.status',
+          'note.id',
           'note.context',
           'note.shiftId',
           'note.createdBy',
@@ -246,16 +248,39 @@ export class ShiftService {
     shiftId: number,
     shiftDto: UpdateShiftReqDto,
   ): Promise<UpdateShiftResDto> {
+    const queryRunner = this._dataSource.createQueryRunner();
+    const { note, ...workShiftPayload } = shiftDto;
     try {
-      const result = await this._shiftRepository
+      await queryRunner.connect();
+      await queryRunner.startTransaction('SERIALIZABLE');
+
+      const updateWorkShift = await this._dataSource
+        .getRepository(Shift)
         .createQueryBuilder('shift')
         .update(Shift)
         .where('shift.id = :shiftId', { shiftId: shiftId })
-        .set(shiftDto)
+        .set(workShiftPayload)
         .execute();
-      return AppResponse.setSuccessResponse<DeleteShiftResDto>(result.affected);
+
+      const updateNote = await this._dataSource
+        .getRepository(Note)
+        .createQueryBuilder()
+        .update(Note)
+        .where('shiftId = :shiftId', { shiftId: shiftId })
+        .set({
+          context: note[0]?.context,
+          createdBy: note[0]?.createdBy,
+        })
+        .execute();
+
+      await queryRunner.commitTransaction();
+      const result = {
+        workshift: updateWorkShift.affected,
+        note: updateNote.affected,
+      };
+      return AppResponse.setSuccessResponse<UpdateShiftResDto>(result);
     } catch (error) {
-      return AppResponse.setAppErrorResponse<AddShiftResDto>(error.message);
+      return AppResponse.setAppErrorResponse<UpdateShiftResDto>(error.message);
     }
   }
 }

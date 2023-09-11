@@ -51,6 +51,11 @@ class AddShift {
   @IsInt({ message: 'The department id must be a number' })
   @Type(() => Number)
   departmentId: number;
+
+  @ApiProperty({ required: false, type: () => AddNoteReqDto, isArray: true })
+  @ValidateNested({ each: true })
+  @Type(() => AddNoteReqDto)
+  note?: Array<AddNoteReqDto> = [];
 }
 export class AddShiftReqDto {
   @ApiProperty({ required: false, type: AddShift })
