@@ -37,7 +37,7 @@ export class AuthController {
   }
 
   @UseGuards(RefreshTokenGuard)
-  @Get('refresh')
+  @Post('refresh')
   @ApiBearerAuth('token')
   async refreshTokens(
     @GetAccount() account,
