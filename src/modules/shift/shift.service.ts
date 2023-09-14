@@ -107,11 +107,16 @@ export class ShiftService {
 
   async getShift(shiftId: number): Promise<GetShiftResDto> {
     try {
-      const result: Shift = await this._shiftRepository
-        .createQueryBuilder('shift')
-        .innerJoin('shift.tasks', 'task')
-        .innerJoin('shift.notes', 'note')
-        .addSelect([
+      const result: IShift = await this._dataSource
+        .createQueryBuilder()
+        .select([
+          'shift.id',
+          'shift.name',
+          'shift.repeatDays',
+          'shift.startTime',
+          'shift.endTime',
+          'shift.createdAt',
+          'shift.updatedAt',
           'task.id',
           'task.shiftId',
           'task.name',
@@ -120,7 +125,13 @@ export class ShiftService {
           'note.context',
           'note.shiftId',
           'note.createdBy',
+          'department.id',
+          'department.name',
         ])
+        .from(Shift, 'shift')
+        .innerJoin('shift.tasks', 'task')
+        .innerJoin('shift.notes', 'note')
+        .innerJoin('shift.department', 'department')
         .where('shift.id = :shiftId', { shiftId: shiftId })
         .getOne();
 

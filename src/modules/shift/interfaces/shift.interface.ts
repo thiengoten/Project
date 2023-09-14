@@ -1,4 +1,6 @@
 import { WEEKDAYS } from '@BE/core/constants';
+import { Note } from '@BE/modules/note/note.entity';
+import { Task } from '@BE/modules/task/entities';
 
 export interface IShift {
   id?: number;
@@ -10,4 +12,6 @@ export interface IShift {
     name?: string;
     address?: string;
   };
+  notes?: Note[];
+  tasks?: Task[];
 }
