@@ -132,7 +132,6 @@ export class ShiftService {
 
   async getShiftList(queries: GetShiftListReqDto): Promise<GetShiftListResDto> {
     try {
-      console.log(queries);
       const shiftTableFields: Array<string> = this._dataSource
         .getMetadata(Shift)
         .columns.map((column) => column.propertyName);

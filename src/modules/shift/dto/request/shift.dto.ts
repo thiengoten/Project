@@ -86,7 +86,6 @@ export class GetShiftListReqDto extends PaginationReqDto {
     }
     return parseInt(value);
   })
-  @IsArray({ message: 'The department id must be an array of numbers' })
   @IsNumber(
     { allowNaN: false, allowInfinity: false },
     { each: true, message: 'The department id must be a number' },
@@ -95,7 +94,7 @@ export class GetShiftListReqDto extends PaginationReqDto {
     required: false,
     type: [Number],
   })
-  readonly departmentId?: number[];
+  readonly departmentId?: number | number[];
 }
 
 export class UpdateShiftReqDto extends OmitType(AddShift, ['departmentId']) {
