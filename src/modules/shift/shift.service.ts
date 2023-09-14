@@ -132,6 +132,7 @@ export class ShiftService {
 
   async getShiftList(queries: GetShiftListReqDto): Promise<GetShiftListResDto> {
     try {
+      console.log(queries);
       const shiftTableFields: Array<string> = this._dataSource
         .getMetadata(Shift)
         .columns.map((column) => column.propertyName);
@@ -158,6 +159,15 @@ export class ShiftService {
 
       if (!queries.departmentId) {
         query = query.innerJoin('shift.department', 'department');
+      } else if (Array.isArray(queries.departmentId)) {
+        query = query.innerJoin(
+          'shift.department',
+          'department',
+          'shift.departmentId IN (:...departmentIds)',
+          {
+            departmentIds: queries.departmentId,
+          },
+        );
       } else {
         query = query.innerJoin(
           'shift.department',
