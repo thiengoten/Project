@@ -169,6 +169,15 @@ export class ShiftService {
 
       if (!queries.departmentId) {
         query = query.innerJoin('shift.department', 'department');
+      } else if (Array.isArray(queries.departmentId)) {
+        query = query.innerJoin(
+          'shift.department',
+          'department',
+          'shift.departmentId IN (:...departmentIds)',
+          {
+            departmentIds: queries.departmentId,
+          },
+        );
       } else {
         query = query.innerJoin(
           'shift.department',

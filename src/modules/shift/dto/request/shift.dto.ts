@@ -80,15 +80,21 @@ export class GetShiftListReqDto extends PaginationReqDto {
   searchText: string;
 
   @IsOptional()
-  @Transform(({ value }) => parseInt(value))
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map((v) => parseInt(v));
+    }
+    return parseInt(value);
+  })
   @IsNumber(
     { allowNaN: false, allowInfinity: false },
-    { message: 'The department id must be a number' },
+    { each: true, message: 'The department id must be a number' },
   )
   @ApiProperty({
     required: false,
+    type: [Number],
   })
-  readonly departmentId?: number;
+  readonly departmentId?: number | number[];
 }
 
 export class UpdateShiftReqDto extends OmitType(AddShift, ['departmentId']) {
