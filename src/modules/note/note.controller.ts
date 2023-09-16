@@ -22,6 +22,9 @@ import {
   GetNoteResDto,
   UpdateNoteResDto,
 } from './dto/response';
+import { ApiTags } from '@nestjs/swagger';
+
+@ApiTags('Note')
 @Controller('note')
 export class NoteController {
   constructor(private noteService: NoteService) {}
