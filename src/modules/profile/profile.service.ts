@@ -677,14 +677,14 @@ export class ProfileService {
       } else {
         query.orderBy('user.createdAt', 'DESC');
       }
-      const { fullQuery, pages, nextPage, totalDocs, prevPage } =
+      const { fullQuery, pages, nextPage, totalDocs, prevPage, currentPage } =
         await ExtraQueryBuilder.paginateBy<User>(query, {
           page: queries.page,
           pageSize: queries.pageSize,
         });
       const profiles: IProfile[] = await fullQuery.getMany();
       return AppResponse.setSuccessResponse<GetProfilesResDto>(profiles, {
-        page: queries.page,
+        page: currentPage,
         pageSize: queries.pageSize,
         totalPages: pages,
         nextPage: nextPage,

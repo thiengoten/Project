@@ -9,6 +9,7 @@ export const ExtraQueryBuilder = {
     totalDocs: number;
     prevPage: number | null;
     nextPage: number | null;
+    currentPage: number | null;
   }> {
     let totalPage: number;
     const totalDocs: number = await query.getCount();
@@ -21,16 +22,45 @@ export const ExtraQueryBuilder = {
         totalPage = Math.ceil(totalDocs / pagination.pageSize);
       }
     }
+    let child = query;
+    if (pagination.page > totalPage) {
+      child = query
+        .take(pagination.pageSize)
+        .skip((totalPage - 1) * pagination.pageSize);
+    }
+    if (pagination.page < 1) {
+      child = query
+        .take(pagination.pageSize)
+        .skip((1 - 1) * pagination.pageSize);
+    }
+    if (1 <= pagination.page && pagination.page <= totalPage) {
+      child = query
+        .take(pagination.pageSize)
+        .skip((pagination.page - 1) * pagination.pageSize);
+    }
 
-    const child = query
-      .take(pagination.pageSize)
-      .skip((pagination.page - 1) * pagination.pageSize);
     return {
       fullQuery: child,
       pages: totalPage,
       totalDocs: totalDocs,
-      prevPage: pagination.page === 1 ? null : pagination.page - 1,
-      nextPage: pagination.page === totalPage ? null : pagination.page + 1,
+      currentPage:
+        pagination.page > totalPage
+          ? totalPage
+          : pagination.page < 1
+          ? 1
+          : pagination.page,
+      prevPage:
+        pagination.page <= 1
+          ? null
+          : pagination.page > totalPage
+          ? totalPage - 1
+          : pagination.page - 1,
+      nextPage:
+        pagination.page >= totalPage
+          ? null
+          : pagination.page < 1
+          ? 2
+          : pagination.page + 1,
     };
   },
   addWhereAnd<T extends BaseEntity>(
