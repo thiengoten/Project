@@ -1,4 +1,4 @@
-import { TYPEORM } from '@BE/core/constants';
+import { TYPEORM, WEEKDAYS } from '@BE/core/constants';
 import { Inject, Injectable } from '@nestjs/common';
 import { DataSource, InsertResult } from 'typeorm';
 import { RegisterScheduleReqDto } from '../dto/request';
@@ -19,36 +19,68 @@ export class ScheduleService {
 
   async registerSchedule(
     data: RegisterScheduleReqDto,
-    shiftId: number,
     accountId: number,
   ): Promise<RegisterScheduleResDto> {
-    const pickedStartDate: Date[] = data?.schdules?.map(
+    const now = new Date();
+    if (now.getDay() !== WEEKDAYS.Saturday) {
+      return AppResponse.setUserErrorResponse<RegisterScheduleResDto>(
+        ErrorHandler.notAvailable('register schedule feature'),
+      );
+    }
+    const weekRange = this.calculateNextWeekRange(now);
+    const pickedStartDate: Date[] = data?.schedules?.map(
       (schedule) => schedule.startDate,
     );
-    const inputDate = new Date(data.schdules[0].startDate);
+    let isOutOfNextWeekRange: boolean[] = pickedStartDate?.map((item) => {
+      const timeStampDate: Date = new Date(item);
+      return (
+        timeStampDate.getDate < weekRange.startDate.getDate ||
+        timeStampDate.getDate > weekRange.endDate.getDate
+      );
+    });
+
+    if (isOutOfNextWeekRange?.includes(true)) {
+      return AppResponse.setUserErrorResponse<RegisterScheduleResDto>(
+        ErrorHandler.invalid('start date'),
+      );
+    }
+    const queryRunner = this._dataSource.createQueryRunner();
     try {
-      // if (now > inputDate) {
-      //   return AppResponse.setUserErrorResponse<RegisterScheduleResDto>(
-      //     ErrorHandler.invalid('The start date'),
-      //   );
-      // }
-      const queryRunner = this._dataSource.createQueryRunner();
-      data.schdules[0].accountId = accountId;
-      data.schdules[0].shiftId = shiftId;
-      data.schdules[0].updatedBy = accountId;
+      await queryRunner.connect();
+      await queryRunner.startTransaction('SERIALIZABLE');
+      data.schedules.forEach((schedule) => {
+        schedule = Object.assign(schedule, {
+          accountId: accountId,
+          updatedBy: accountId,
+        });
+      });
       const response: InsertResult = await this._dataSource
         .getRepository(Schedule)
         .createQueryBuilder('shift')
         .insert()
         .into(Schedule)
-        .values(data.schdules)
+        .values(data.schedules)
         .returning(['id', 'startDate', 'accountId', 'isAccept'])
         .execute();
-      return AppResponse.setSuccessResponse<RegisterScheduleResDto>({});
+      await queryRunner.commitTransaction();
+      return AppResponse.setSuccessResponse<RegisterScheduleResDto>(
+        response.generatedMaps,
+      );
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       return AppResponse.setAppErrorResponse<RegisterScheduleResDto>(
         error.message,
       );
     }
+  }
+
+  private calculateNextWeekRange(now: Date): {
+    startDate: Date;
+    endDate: Date;
+  } {
+    return {
+      startDate: new Date(now.setDate(now.getDate() + 2)),
+      endDate: new Date(now.setDate(now.getDate() + 8)),
+    };
   }
 }

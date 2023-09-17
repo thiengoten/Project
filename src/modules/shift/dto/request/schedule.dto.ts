@@ -15,8 +15,9 @@ class RegistSchedule {
   @ApiProperty({ example: '2023-10-01' })
   startDate: Date;
 
-  @IsOptional()
+  @IsNotEmpty()
   @Transform(({ value }) => parseInt(value))
+  @ApiProperty({ example: 1 })
   shiftId?: number;
 
   @IsEmpty({
@@ -51,5 +52,5 @@ export class RegisterScheduleReqDto {
   @ApiProperty({ required: false, type: RegistSchedule })
   @ValidateNested()
   @Type(() => RegistSchedule)
-  schdules?: RegistSchedule[];
+  schedules?: RegistSchedule[];
 }

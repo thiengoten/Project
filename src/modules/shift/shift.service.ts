@@ -22,7 +22,6 @@ import { Shift } from './entities/shift.entity';
 import { AppResponse } from '@BE/core/shared/app.response';
 import { Schedule } from './entities/schedule.entity';
 import { Task } from '@BE/modules/task/entities';
-import { ExtraQuery } from '@BE/core/utils';
 import { Note } from '@BE/modules/note/note.entity';
 import { ExtraQueryBuilder } from '@BE/core/utils/querybuilder.typeorm';
 import { ErrorHandler } from '@BE/core/shared/common/error';

@@ -108,7 +108,6 @@ export class ShiftController {
     const response: RegisterScheduleResDto =
       await this.scheduleService.registerSchedule(
         dto,
-        shiftId,
         account.payload.accountId,
       );
     return response;
