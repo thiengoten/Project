@@ -22,12 +22,12 @@ export class ScheduleService {
     accountId: number,
   ): Promise<RegisterScheduleResDto> {
     const now = new Date();
-    if (now.getDay() !== WEEKDAYS.Saturday) {
+    if (now.getDay() !== WEEKDAYS.Sunday) {
       return AppResponse.setUserErrorResponse<RegisterScheduleResDto>(
         ErrorHandler.notAvailable('register schedule feature'),
       );
     }
-    const weekRange = this.calculateNextWeekRange(now);
+    const weekRange = this.calculateNextWeekRange(new Date(now.setDate(now.getDate()-1)));
     const pickedStartDate: Date[] = data?.schedules?.map(
       (schedule) => schedule.startDate,
     );
@@ -79,8 +79,18 @@ export class ScheduleService {
     endDate: Date;
   } {
     return {
-      startDate: new Date(now.setDate(now.getDate() + 2)),
-      endDate: new Date(now.setDate(now.getDate() + 8)),
+      startDate: new Date(
+        now.setDate(
+          now.getDay() !== WEEKDAYS.Sunday
+            ? now.getDate() + (7 - now.getDay() + 1)
+            : now.getDate() + (now.getDay() + 1),
+        ),
+      ),
+      endDate: new Date(
+        now.getDay() !== WEEKDAYS.Sunday
+          ? now.setDate(now.getDate() + (7 - now.getDay() + 7))
+          : now.setDate(now.getDate() + (now.getDay() + 7)),
+      ),
     };
   }
 }

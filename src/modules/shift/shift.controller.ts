@@ -98,12 +98,11 @@ export class ShiftController {
     return response;
   }
 
-  @Post('registSchedule/:shiftId')
+  @Post('registSchedule')
   @Auth()
   async registerSchedule(
     @GetAccount() account,
     @Body() dto: RegisterScheduleReqDto,
-    @Param('shiftId', ParseIntPipe) shiftId: number,
   ): Promise<RegisterScheduleResDto> {
     const response: RegisterScheduleResDto =
       await this.scheduleService.registerSchedule(
