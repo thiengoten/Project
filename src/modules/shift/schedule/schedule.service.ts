@@ -22,12 +22,14 @@ export class ScheduleService {
     accountId: number,
   ): Promise<RegisterScheduleResDto> {
     const now = new Date();
-    if (now.getDay() !== WEEKDAYS.Sunday) {
+    if (now.getDay() !== WEEKDAYS.Monday) {
       return AppResponse.setUserErrorResponse<RegisterScheduleResDto>(
         ErrorHandler.notAvailable('register schedule feature'),
       );
     }
-    const weekRange = this.calculateNextWeekRange(new Date(now.setDate(now.getDate()-1)));
+    const weekRange = this.calculateNextWeekRange(
+      new Date(now.setDate(now.getDate() - 1)),
+    );
     const pickedStartDate: Date[] = data?.schedules?.map(
       (schedule) => schedule.startDate,
     );
@@ -44,30 +46,24 @@ export class ScheduleService {
         ErrorHandler.invalid('start date'),
       );
     }
-    const queryRunner = this._dataSource.createQueryRunner();
     try {
-      await queryRunner.connect();
-      await queryRunner.startTransaction('SERIALIZABLE');
       data.schedules.forEach((schedule) => {
         schedule = Object.assign(schedule, {
           accountId: accountId,
           updatedBy: accountId,
         });
       });
-      const response: InsertResult = await this._dataSource
-        .getRepository(Schedule)
-        .createQueryBuilder('shift')
+      const response: InsertResult = await this._dataSource.getRepository(Schedule)
+        .createQueryBuilder()
         .insert()
         .into(Schedule)
         .values(data.schedules)
         .returning(['id', 'startDate', 'accountId', 'isAccept'])
         .execute();
-      await queryRunner.commitTransaction();
       return AppResponse.setSuccessResponse<RegisterScheduleResDto>(
         response.generatedMaps,
       );
     } catch (error) {
-      await queryRunner.rollbackTransaction();
       return AppResponse.setAppErrorResponse<RegisterScheduleResDto>(
         error.message,
       );
