@@ -22,7 +22,7 @@ export class ScheduleService {
     accountId: number,
   ): Promise<RegisterScheduleResDto> {
     const now = new Date();
-    if (now.getDay() !== WEEKDAYS.Monday) {
+    if (now.getDay() !== WEEKDAYS.Saturday) {
       return AppResponse.setUserErrorResponse<RegisterScheduleResDto>(
         ErrorHandler.notAvailable('register schedule feature'),
       );
