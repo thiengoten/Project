@@ -222,7 +222,7 @@ export class ShiftService {
         query.orderBy('shift.createdAt', 'DESC');
       }
 
-      const { fullQuery, pages, nextPage, totalDocs, prevPage } =
+      const { fullQuery, pages, nextPage, totalDocs, prevPage, currentPage } =
         await ExtraQueryBuilder.paginateBy<Shift>(query, {
           page: queries.page,
           pageSize: queries.pageSize,
@@ -231,7 +231,7 @@ export class ShiftService {
       const shiftResult: IShift[] = await fullQuery.getMany();
 
       return AppResponse.setSuccessResponse<GetShiftListResDto>(shiftResult, {
-        page: queries.page,
+        page: currentPage,
         pageSize: queries.pageSize,
         totalPages: pages,
         nextPage: nextPage,
