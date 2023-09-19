@@ -15,6 +15,7 @@ import {
 import {
   AddShiftReqDto,
   GetShiftListReqDto,
+  RegisterScheduleReqDto,
   UpdateShiftReqDto,
 } from './dto/request';
 import {
@@ -23,15 +24,20 @@ import {
   GetShiftResDto,
   GetShiftListResDto,
   UpdateShiftResDto,
+  RegisterScheduleResDto,
 } from './dto/response';
 import { ShiftService } from './shift.service';
 import { ACCOUNT_ROLE } from '@BE/core/constants';
-import { Auth } from '@BE/core/utils/decorators';
+import { Auth, GetAccount } from '@BE/core/utils/decorators';
+import { ScheduleService } from './schedule/schedule.service';
 
 @ApiTags('Work shift')
 @Controller('shift')
 export class ShiftController {
-  constructor(private shiftService: ShiftService) {}
+  constructor(
+    private shiftService: ShiftService,
+    private scheduleService: ScheduleService,
+  ) {}
 
   @ApiOperation({ description: 'Create a new work shift' })
   @ApiResponse({
@@ -89,6 +95,20 @@ export class ShiftController {
       shiftId,
       shiftDto,
     );
+    return response;
+  }
+
+  @Post('registSchedule')
+  @Auth()
+  async registerSchedule(
+    @GetAccount() account,
+    @Body() dto: RegisterScheduleReqDto,
+  ): Promise<RegisterScheduleResDto> {
+    const response: RegisterScheduleResDto =
+      await this.scheduleService.registerSchedule(
+        dto,
+        account.payload.accountId,
+      );
     return response;
   }
 }
