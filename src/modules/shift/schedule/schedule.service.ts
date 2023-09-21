@@ -1,11 +1,13 @@
 import { TYPEORM, WEEKDAYS } from '@BE/core/constants';
 import { Inject, Injectable } from '@nestjs/common';
-import { DataSource, InsertResult } from 'typeorm';
+import { DataSource, InsertResult, ObjectId } from 'typeorm';
 import { RegisterScheduleReqDto } from '../dto/request';
 import { AppResponse } from '@BE/core/shared/app.response';
 import { ErrorHandler } from '@BE/core/shared/common/error';
 import { RegisterScheduleResDto } from '../dto/response/schedule.dto';
 import { Schedule } from '../entities/schedule.entity';
+import { DateTool } from '@BE/core/utils';
+import { ISchedule } from '../interfaces';
 
 @Injectable()
 export class ScheduleService {
@@ -27,10 +29,8 @@ export class ScheduleService {
         ErrorHandler.notAvailable('register schedule feature'),
       );
     }
-    const weekRange = this.calculateNextWeekRange(
-      new Date(now.setDate(now.getDate() - 1)),
-    );
-    const pickedStartDate: Date[] = data?.schedules?.map(
+    const weekRange = DateTool.calculateWeekRange(1);
+    const pickedStartDate: Date[] = data?.schedulesPayload?.map(
       (schedule) => schedule.startDate,
     );
     let isOutOfNextWeekRange: boolean[] = pickedStartDate?.map((item) => {
@@ -47,17 +47,51 @@ export class ScheduleService {
       );
     }
     try {
-      data.schedules.forEach((schedule) => {
+      let formatedScheduleList: ISchedule[] = [];
+      data.schedulesPayload.forEach((schedule) => {
         schedule = Object.assign(schedule, {
           accountId: accountId,
           updatedBy: accountId,
         });
       });
-      const response: InsertResult = await this._dataSource.getRepository(Schedule)
+      formatedScheduleList = data.schedulesPayload.flatMap((schedule) => {
+        if (schedule.shiftIds.length > 1) {
+          const mappingScheduleList: ISchedule[] = schedule.shiftIds.map(
+            (shiftId) => {
+              const mappingSchedule: ISchedule = Object.assign(
+                {},
+                {
+                  startDate: schedule.startDate,
+                  shiftId: shiftId,
+                  accountId: schedule.accountId,
+                  updatedBy: schedule.updatedBy,
+                  isAccept: schedule.isAccept,
+                },
+              );
+              return mappingSchedule;
+            },
+          );
+          return mappingScheduleList;
+        }
+        const mappingSchedule: ISchedule = Object.assign(
+          {},
+          {
+            startDate: schedule.startDate,
+            shiftId: schedule.shiftIds[0],
+            accountId: schedule.accountId,
+            updatedBy: schedule.updatedBy,
+            isAccept: schedule.isAccept,
+          },
+        );
+        return mappingSchedule;
+      });
+
+      const response: InsertResult = await this._dataSource
+        .getRepository(Schedule)
         .createQueryBuilder()
         .insert()
         .into(Schedule)
-        .values(data.schedules)
+        .values(formatedScheduleList)
         .returning(['id', 'startDate', 'accountId', 'isAccept'])
         .execute();
       return AppResponse.setSuccessResponse<RegisterScheduleResDto>(
@@ -68,25 +102,5 @@ export class ScheduleService {
         error.message,
       );
     }
-  }
-
-  private calculateNextWeekRange(now: Date): {
-    startDate: Date;
-    endDate: Date;
-  } {
-    return {
-      startDate: new Date(
-        now.setDate(
-          now.getDay() !== WEEKDAYS.Sunday
-            ? now.getDate() + (7 - now.getDay() + 1)
-            : now.getDate() + (now.getDay() + 1),
-        ),
-      ),
-      endDate: new Date(
-        now.getDay() !== WEEKDAYS.Sunday
-          ? now.setDate(now.getDate() + (7 - now.getDay() + 7))
-          : now.setDate(now.getDate() + (now.getDay() + 7)),
-      ),
-    };
   }
 }
