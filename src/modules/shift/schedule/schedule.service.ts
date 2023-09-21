@@ -47,14 +47,14 @@ export class ScheduleService {
       );
     }
     try {
-      let insertedScheduleList: ISchedule[] = [];
+      let formatedScheduleList: ISchedule[] = [];
       data.schedulesPayload.forEach((schedule) => {
         schedule = Object.assign(schedule, {
           accountId: accountId,
           updatedBy: accountId,
         });
       });
-      insertedScheduleList = data.schedulesPayload.flatMap((schedule) => {
+      formatedScheduleList = data.schedulesPayload.flatMap((schedule) => {
         if (schedule.shiftIds.length > 1) {
           const mappingScheduleList: ISchedule[] = schedule.shiftIds.map(
             (shiftId) => {
@@ -91,7 +91,7 @@ export class ScheduleService {
         .createQueryBuilder()
         .insert()
         .into(Schedule)
-        .values(insertedScheduleList)
+        .values(formatedScheduleList)
         .returning(['id', 'startDate', 'accountId', 'isAccept'])
         .execute();
       return AppResponse.setSuccessResponse<RegisterScheduleResDto>(
