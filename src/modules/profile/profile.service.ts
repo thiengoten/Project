@@ -23,17 +23,21 @@ import { Position } from '@BE/modules/organisation/entities/position.entity';
 import { isProfileUpdateAllowedForUserRole } from '@BE/core/utils/checkUser';
 import { Account } from '@BE/modules/auth/account.entity';
 import { ExtraQueryBuilder } from '@BE/core/utils/querybuilder.typeorm';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class ProfileService {
   private _userRepository: Repository<User>;
   private _dataSource: DataSource;
+  private readonly _mailerService: MailerService;
   constructor(
     @Inject(TYPEORM)
     dataSource: DataSource,
+    mailerService: MailerService,
   ) {
     this._dataSource = dataSource;
     this._userRepository = dataSource.getRepository(User);
+    this._mailerService = mailerService;
   }
 
   async createProfile(data: AddProfileReqDto): Promise<AddProfileResDto> {
@@ -112,6 +116,21 @@ export class ProfileService {
           accountId: addAccountResult.identifiers[0].id,
         };
 
+        const emailData = {
+          name: userData.fullname,
+          password,
+        };
+
+        const mail = await this._mailerService.sendMail({
+          to: userData.email,
+          from: 'noreply@nestjs.com',
+          subject: 'Welcome to Zafira 🥳',
+          template: 'index',
+          context: {
+            emailData,
+          },
+        });
+
         return AppResponse.setSuccessResponse<AddProfileResDto>(data, {
           status: 201,
           message: 'Created',
@@ -123,15 +142,15 @@ export class ProfileService {
         await querryRunner.release();
       }
     } catch (error) {
-      return error.detail.includes('departmentId')
+      return error?.detail?.includes('departmentId')
         ? AppResponse.setUserErrorResponse<AddProfileResDto>(
             ErrorHandler.notFound('Department'),
-            { status: 404 },
+            { status: 400 },
           )
-        : error.detail.includes('positionId')
+        : error?.detail?.includes('positionId')
         ? AppResponse.setUserErrorResponse<AddProfileResDto>(
             ErrorHandler.notFound('Position'),
-            { status: 404 },
+            { status: 400 },
           )
         : AppResponse.setAppErrorResponse<AddProfileResDto>(error.message);
     }
@@ -187,6 +206,7 @@ export class ProfileService {
         where: { id: accountId },
         relations: ['user', 'role', 'user.department', 'user.position'],
       });
+
       if (!account)
         return AppResponse.setAppErrorResponse<GetProfileResDto>(
           ErrorHandler.notFound(`Account ${accountId}`),

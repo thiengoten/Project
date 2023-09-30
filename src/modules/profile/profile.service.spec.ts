@@ -1,23 +1,50 @@
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ProfileModule } from './profile.module';
 import { DatabaseModule } from '../../../src/db/database.module';
 import { ProfileService } from './profile.service';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import { AddProfileReqDto } from './dto/req';
 import { AccountService } from '../auth/services';
 import { AuthModule } from '../auth/auth.module';
 import { AddProfileResDto, GetProfileResDto } from './dto/res';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter';
 
 describe('InventoryService', () => {
   let profileService: ProfileService;
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const module = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env'] }),
         ProfileModule,
         AuthModule,
         DatabaseModule,
+        MailerModule.forRootAsync({
+          imports: [ConfigModule],
+          inject: [ConfigService],
+          useFactory: (configService: ConfigService) => ({
+            transport: {
+              host: configService.get<string>('EMAIL_HOST'),
+              port: configService.get<number>('EMAIL_PORT'),
+              secure: false,
+              auth: {
+                user: configService.get<string>('EMAIL_USER'),
+                pass: configService.get<string>('EMAIL_PASS'),
+              },
+            },
+            defaults: {
+              from: '"nest-modules" <modules@nestjs.com>',
+            },
+            template: {
+              dir: process.cwd() + '/templates',
+              adapter: new EjsAdapter(),
+              options: {
+                strict: false,
+              },
+            },
+          }),
+        }),
       ],
       providers: [ProfileService, AccountService],
     }).compile();

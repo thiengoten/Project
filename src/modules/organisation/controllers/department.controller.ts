@@ -19,9 +19,9 @@ import {
   AddDepartmentReqDto,
   UpdateDepartmentReqDto,
 } from '../dto/department/req';
-import { Auth } from 'src/core/utils/decorators';
 import { ListDepartmentResDto } from '../dto/department/res/swagger.dto';
-import { ACCOUNT_ROLE } from 'src/core/constants';
+import { Auth } from '@BE/core/utils/decorators';
+import { ACCOUNT_ROLE } from '@BE/core/constants';
 
 @ApiTags('Department')
 @Controller('department')
